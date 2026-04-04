@@ -22,18 +22,51 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# Capture the first argument as the search query
-# If no argument is provided, it defaults to an empty string
-QUERY="$*"
+command=$1
+shift
+
+export FZF_GH_QUERY="$@"
+
+case "$command" in
+  l)
+    cmd='gh pr list --search "$FZF_GH_QUERY"'
+    repo=""
+    id='{1}'
+    preview="gh pr view --comments $id"
+    view_cmd="gh pr view $id"
+    open_cmd="gh pr view --web $id"
+    enter_cmd="gh pr checkout $id"
+    footer="Query: $FZF_GH_QUERY | Press Enter to checkout / CTRL-O to open in browser / CTRL-V to open in editor"
+    ;;
+
+  s)
+    # Search across repos
+    cmd='gh search prs $FZF_GH_QUERY'
+    repo='{1}'
+    id='{2}'
+    preview="gh pr view --repo $repo --comments $id"
+    view_cmd="gh pr view --repo $repo $id"
+    open_cmd="gh pr view --web --repo $repo $id"
+    enter_cmd="$open_cmd"
+    footer="Query: $FZF_GH_QUERY | Press Enter, CTRL-O to open in browser / CTRL-V to open in editor"
+    ;;
+
+  *)
+    echo "Usage: $0 {l|s} [query]"
+    exit 1
+    ;;
+esac
 
 fzf --tmux 80%,100%,border-native --ansi \
-    --info inline --reverse --header-lines 4 \
-    --preview 'GH_FORCE_TTY=$FZF_PREVIEW_COLUMNS gh pr view --comments {1}' \
-    --preview-window up:border-down \
-    --with-shell 'bash -c' \
-    --bind 'start:preview(echo Loading pull requests ...)+reload:GH_FORCE_TTY=95% gh pr list --limit=1000 --search "$QUERY"' \
-    --bind 'load:transform:(( FZF_TOTAL_COUNT )) || echo become:echo No pull requests' \
-    --bind 'ctrl-o:execute-silent:gh pr view --web {1}' \
-    --bind 'ctrl-v:execute:gh pr view {1} | sed "s/\r//g" | view - +"setf markdown"' \
-    --bind 'enter:become:gh pr checkout {1}' \
-    --footer="Query: $QUERY | Press Enter to checkout / CTRL-O to open in browser / CTRL-V to open in editor"
+  --info inline --reverse --header-lines 4 \
+  --preview "GH_FORCE_TTY=\$FZF_PREVIEW_COLUMNS $preview" \
+  --preview-window up:border-down \
+  --with-shell 'bash -c' \
+  --bind "start:preview(echo Loading pull requests...)+reload:GH_FORCE_TTY=95% $cmd" \
+  --bind "load:transform:(( FZF_TOTAL_COUNT )) || echo \"become:echo No pull requests found for query: $FZF_GH_QUERY\"" \
+  --bind "ctrl-o:execute-silent:$open_cmd" \
+  --bind "ctrl-v:execute:$view_cmd | sed 's/\r//g' | view - +'setf markdown'" \
+  --bind "enter:become:$enter_cmd" \
+  --footer="Query: $FZF_GH_QUERY | Enter=action / CTRL-O=browser / CTRL-V=editor"
+
+
