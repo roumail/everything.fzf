@@ -25,16 +25,19 @@
 command=$1
 shift
 
+source lib.sh
+
 export FZF_GH_QUERY="$@"
+
+preview="gh pr view --repo $repo --comments $id"
+view_cmd="gh pr view --repo $repo $id"
+open_cmd="gh pr view --web --repo $repo $id"
 
 case "$command" in
   l)
-    cmd='gh pr list --search "$FZF_GH_QUERY"'
-    repo=""
+    repo=$(resolve_repo "$FZF_GH_QUERY") || exit 1
+    cmd="gh pr list --repo $repo --search \"$FZF_GH_QUERY\""
     id='{1}'
-    preview="gh pr view --comments $id"
-    view_cmd="gh pr view $id"
-    open_cmd="gh pr view --web $id"
     enter_cmd="gh pr checkout $id"
     footer="Query: $FZF_GH_QUERY | Press Enter to checkout / CTRL-O to open in browser / CTRL-V to open in editor"
     ;;
@@ -44,9 +47,6 @@ case "$command" in
     cmd='gh search prs $FZF_GH_QUERY'
     repo='{1}'
     id='{2}'
-    preview="gh pr view --repo $repo --comments $id"
-    view_cmd="gh pr view --repo $repo $id"
-    open_cmd="gh pr view --web --repo $repo $id"
     enter_cmd="$open_cmd"
     footer="Query: $FZF_GH_QUERY | Press Enter, CTRL-O to open in browser / CTRL-V to open in editor"
     ;;
