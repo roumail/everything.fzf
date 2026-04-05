@@ -25,14 +25,12 @@ command=$1
 shift
 export FZF_GH_QUERY="$@"
 
+source lib.sh
+
 case "$command" in
   l)
     cmd='gh issue list $FZF_GH_QUERY'
-    # Either retrieve --repo from the user query
-    GH_REPO_FLAG=$(echo "$FZF_GH_QUERY" | awk '{for(i=1;i<=NF;i++) if($i=="--repo") print $(i+1)}')
-    # or default to remote
-    LOCAL_REPO=$(git remote -v 2>/dev/null | awk '/fetch/ {print $2}' | sed -E 's/.*[:\/](.*\/.*)\.git$/\1/; s/.*github\.com\///' | head -n1)
-    repo="${GH_REPO_FLAG:-$LOCAL_REPO}"
+    repo=$(resolve_repo "$FZF_GH_QUERY") || exit 1
     # List: ID is column 1.
     id='{1}'
     ;;
