@@ -24,8 +24,9 @@
 
 command=$1
 shift
-
-source lib.sh
+SCRIPT_PATH="$(readlink -f "${BASH_SOURCE[0]}")"
+SCRIPT_DIR="$(cd -- "$(dirname -- "$SCRIPT_PATH")" && pwd)"
+source "$SCRIPT_DIR/lib.sh"
 
 export FZF_GH_QUERY="$@"
 
