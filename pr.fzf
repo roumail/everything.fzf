@@ -33,7 +33,7 @@ export FZF_GH_QUERY="$@"
 case "$command" in
   l)
     repo=$(resolve_repo "$FZF_GH_QUERY") || exit 1
-    cmd="gh pr list --repo $repo --search \"$FZF_GH_QUERY\""
+    cmd="gh pr list --repo $repo $FZF_GH_QUERY"
     id='{1}'
     enter_cmd="gh pr checkout $id"
     footer="Query: $FZF_GH_QUERY | Press Enter to checkout / CTRL-O to open in browser / CTRL-V to open in editor"
