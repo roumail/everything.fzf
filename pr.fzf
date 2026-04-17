@@ -30,8 +30,11 @@ source "$SCRIPT_DIR/lib.sh"
 
 # Optional author selection if config exists + using "la"
 if [[ "$command" == "la" && -f ~/.config/gh-pr-authors.txt ]]; then
-  entry=$(fzf --delimiter=: --with-nth=1 --nth=1< ~/.config/gh-pr-authors.txt) || exit 0
-  author=${entry#*:}
+  entry=$(
+      awk -F: '{printf "%s\t%s\n", $1, $2}' ~/.config/gh-pr-authors.txt |
+      fzf --delimiter=$'\t' --with-nth=1
+  ) || exit 0
+  author=${entry#*$'\t'}
 
   set -- "--author=$author" "$@"
 
